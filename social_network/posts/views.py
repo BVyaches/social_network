@@ -17,4 +17,4 @@ def group_posts(request, slug):
     # Метод .filter позволяет ограничить поиск по критериям. Это аналог добавления
     # условия WHERE group_id = {group_id}
     posts = Post.objects.filter(group=group).order_by("-pub_date")[:12]
-    return render(request, "group.html", {"group": group, "posts": posts})
+    return render(request, "group.html", {"group": group, "t": posts})
