@@ -13,16 +13,15 @@
 </head>
 
 <body>
-
+{%include 'nav.html' %}
 <main>
     <div class="container">
         <h1>{% block header %}The social network{% endblock %}</h1>
         {% block content %}
-        <!-- Содержимое страницы -->
         {% endblock %}
     </div>
 </main>
-
+{%include 'footer.html' %}
 </body>
 
 </html>
