@@ -1,11 +1,11 @@
-from django.contrib.auth.forms import forms
+from django.forms import ModelForm
 from .models import Post
 
 
-class CreationForm(forms.ModelForm):
+class CreationForm(ModelForm):
     class Meta:
         model = Post
-        fields = ['text', 'group']
+        fields = ('text', 'group')
         labels = {'text': 'Текст',
                   'group': 'Группа'
                   }

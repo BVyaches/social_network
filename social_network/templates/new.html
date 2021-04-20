@@ -17,7 +17,7 @@
                     {% endfor %}
 
 
-                <form method="post" action="{% url 'index' %}">
+                <form method="post" action="{% url 'new_post' %}">
                     {% csrf_token %}
 
                     {% for field in form %}

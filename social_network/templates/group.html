@@ -1,23 +1,21 @@
-<!doctype html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>{{ group.title }} | Social Network</title>
-</head>
-<body>
-<h1>{{ group.title }}</h1>
-<p>
-    {{ group.description }}
-</p>
-{% for post in t %}
+{% extends "base.html" %}
+{% block title %}Последние обновления на сайте{% endblock %}
+{% block header %}Последние обновления на сайте{% endblock %}
+{% block content %}
+
+
+{% for post in page %}
 <h3>
-    Автор: {{ post.author.get_full_name }}, дата публикации: {{ post.pub_date|date:"d M Y" }}
+
+    Автор: <a href="/{{ post.author.username }}/"> {{ post.author.username }} </a><br>
+    {{ post.author.get_full_name }}, Дата публикации: {{ post.pub_date|date:"d M Y" }},
+    Группа: {{ post.group }}
 </h3>
 <p>{{ post.text|linebreaksbr }}</p>
-<hr>
+{% if not forloop.last %}
+<hr>{% endif %}
 {% endfor %}
-<hr>
+{% include "paginator.html" %}
 
-</body>
-</html>
+{% endblock %}
+
