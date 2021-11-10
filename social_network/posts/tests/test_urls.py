@@ -1,5 +1,6 @@
 from django.test import TestCase, Client
-from posts.models import Group, User
+from django.urls import reverse
+from posts.models import Group, User, Post
 
 
 class TaskURLTests(TestCase):
@@ -7,7 +8,7 @@ class TaskURLTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create(
-            username='Чел'
+            username='yes'
         )
 
         Group.objects.create(
@@ -17,11 +18,18 @@ class TaskURLTests(TestCase):
             author=cls.user
         )
 
+        cls.post = Post.objects.create(
+            text='Крутой текст',
+            author=cls.user,
+
+        )
+
     def setUp(self):
         # Создаем неавторизованный клиент
         self.guest_client = Client()
         # Создаем авторизованый клиент
-        self.user = User.objects.create_user(username='Крутой чел')
+        # self.user = User.objects.create_user(username='test_username')
+        self.user = TaskURLTests.user
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
@@ -50,9 +58,44 @@ class TaskURLTests(TestCase):
         templates = {
             '/': 'index.html',
             '/new': 'new.html',
-            '/group/cool_address/': 'group.html'
+            '/group/cool_address/': 'group.html',
+            f'/{TaskURLTests.user}/{TaskURLTests.post.id}': 'post.html',
+
         }
         for value, expected in templates.items():
             with self.subTest(value=value):
                 self.assertTemplateUsed(
                     self.authorized_client.get(value), expected)
+
+    def test_profile(self):
+        '''Profile is acceptable'''
+        response = self.authorized_client.get(f'/{TaskURLTests.user}/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_available_for_authorized(self):
+        '''Post is available for authorized'''
+        response = self.authorized_client.get(f'/{TaskURLTests.user}/{TaskURLTests.post.id}')
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_edit_available_for_author(self):
+        '''Post edit is available for authorized'''
+        response = self.authorized_client.get(f'/{TaskURLTests.user}/{TaskURLTests.post.id}/edit')
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_not_available_for_unauthorized(self):
+        '''Post edit is not available for unauthorized'''
+        response = self.guest_client.get(f'/{TaskURLTests.user}/{TaskURLTests.post.id}/edit')
+        self.assertEqual(response.status_code, 302)
+
+    def test_post_not_available_for_not_author(self):
+        '''Post edit is not available for not author'''
+        self.user_1 = User.objects.create(
+            username='test_user'
+        )
+        self.wrong_author = Client()
+        self.wrong_author.force_login(self.user_1)
+
+        response = self.wrong_author.get(
+            f'/{TaskURLTests.user.username}/{TaskURLTests.post.id}/edit', follow=True)
+        self.assertRedirects(response, reverse('index'))
+

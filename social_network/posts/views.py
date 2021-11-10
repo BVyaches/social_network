@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -33,7 +33,7 @@ def new_post(request):
         form.instance.author = request.user
         form.save()
         return redirect('index')
-    return render(request, 'new.html', {'form': form})
+    return render(request, 'new.html', {'form': form, 'edit': False})
 
 
 def profile(request, username):
@@ -45,9 +45,19 @@ def profile(request, username):
     return render(request, 'profile.html', {'profile': profile, 'page': page})
 
 
-def post_view(request, username, id):
-    pass
+@login_required
+def post_view(request, username, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    return render(request, 'post.html', {'post': post})
 
 
-def post_edit():
-    pass
+def post_edit(request, username, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.user.username == username:
+        form = CreationForm(request.POST or None, instance=post)
+        if form.is_valid():
+
+            form.save()
+            return redirect('index')
+        return render(request, 'new.html', {'form': form, 'edit': True, 'post': post})
+    return redirect('index')

@@ -13,7 +13,7 @@ class GroupPostPagesTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create(
-            username='Чел'
+            username='yes'
         )
 
         cls.group = Group.objects.create(
@@ -33,7 +33,7 @@ class GroupPostPagesTest(TestCase):
         # Создаём неавторизованный клиент
         self.guest_client = Client()
         # Создаём авторизованный клиент
-        self.user = User.objects.create_user(username='StasBasov')
+        self.user = GroupPostPagesTest.user
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
@@ -45,7 +45,7 @@ class GroupPostPagesTest(TestCase):
             'group.html': reverse('group_posts', kwargs={'slug':
                                                              'cool_address'}),
             'index.html': reverse('index'),
-            'new.html': reverse('new_post')
+            'new.html': reverse('new_post'),
 
         }
         # Проверяем, что при обращении к name
@@ -56,7 +56,7 @@ class GroupPostPagesTest(TestCase):
                 self.assertTemplateUsed(response, template)
 
     def test_new_post_show_correct_context(self):
-        """Шаблон new сформирован с неправильным контекстом."""
+        """Шаблон new сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('new_post'))
         # Словарь ожидаемых типов полей формы:
         # указываем, объектами какого класса должны быть поля формы
@@ -77,7 +77,7 @@ class GroupPostPagesTest(TestCase):
                 self.assertIsInstance(form_field, expected)
 
     def test_home_page_show_correct_context(self):
-        """Шаблон index сформирован с неправильным контекстом."""
+        """Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('index'))
         # Взяли первый элемент из списка и проверили, что его содержание
         # совпадает с ожидаемым
@@ -86,7 +86,7 @@ class GroupPostPagesTest(TestCase):
         task_text_0 = first_object.text
         task_author_0 = first_object.author.username
         task_group_0 = first_object.group.title
-        self.assertEqual(task_author_0, 'Чел')
+        self.assertEqual(task_author_0, 'yes')
         self.assertEqual(task_text_0, 'Крутой текст')
         self.assertEqual(task_group_0, 'Крутое название')
 
@@ -111,6 +111,36 @@ class GroupPostPagesTest(TestCase):
         )
 
         self.assertEqual(posts_count + 1, Post.objects.count())
+
+    def test_post_edit_context(self):
+        """Шаблон post_edit сформирован с правильным контекстом."""
+        # response = self.authorized_client.get(
+        #   reverse('post_edit', kwargs={'username': 'yes', 'post_id': GroupPostPagesTest.post.id}))
+        response = self.authorized_client.get(f'/{GroupPostPagesTest.user}/{GroupPostPagesTest.post.id}', )
+
+        self.assertEqual(response.context['post'].text, 'Крутой текст')
+        self.assertEqual(response.context['post'].group.title,
+                         'Крутое название')
+
+    def test_post_view_context(self):
+        """Шаблон post_view сформирован с правильным контекстом."""
+        response = self.authorized_client.get(
+            reverse('post', kwargs={'username':
+                                        GroupPostPagesTest.user.username,
+                                    'post_id':
+                                        GroupPostPagesTest.post.id}))
+        self.assertEqual(response.context['post'].text, 'Крутой текст')
+        self.assertEqual(response.context['user'].username, 'yes')
+        self.assertEqual(response.context['post'].group.title,
+                         'Крутое название')
+
+    def test_profile_context(self):
+        """Шаблон profile сформирован с правильным контекстом."""
+        response = self.authorized_client.get(
+            reverse('profile', kwargs={'username':
+                                           GroupPostPagesTest.user.username,
+                                       }))
+        self.assertEqual(response.context['user'].username, 'yes')
 
 
 class PaginatorViewTest(TestCase):

@@ -42,14 +42,14 @@ class PostCreateFormTests(TestCase):
         )
 
     def test_create_pure_post(self):
-        """Валидная форма создает запись в Task."""
+        """Валидная форма создает запись в Post."""
         # Подсчитаем количество записей в Task
         post_count = Post.objects.count()
 
         form_data = {
             'text': '',
-
         }
+
         response = self.authorized_client.post(
             reverse('new_post'),
             data=form_data,
@@ -65,3 +65,42 @@ class PostCreateFormTests(TestCase):
         )
         # Проверим, что ничего не упало и страница отдаёт код 200
         self.assertEqual(response.status_code, 200)
+
+
+class PostEditTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create(
+            username='yes'
+        )
+
+        cls.post = Post.objects.create(
+            text='Крутой текст',
+            author=cls.user,
+        )
+
+    def setUp(self):
+        # Создаем авторизованный клиент
+        self.user = PostEditTests.user
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+
+    def test_post_edits(self):
+        """При редактировании поста через форму на странице
+        /<username>/<post_id>/edit/ изменяется соответствующая запись в базе данных"""
+
+        post = PostEditTests.post
+        new_data = {
+            'text': 'Крутой текст1',
+        }
+        self.authorized_client.post(
+            reverse('post_edit', kwargs={'username': 'yes', 'post_id': post.id}),
+            data=new_data, follow=True)
+
+        response = self.authorized_client.get(reverse('post', kwargs={'username':
+                                                                          'yes',
+                                                                      'post_id':
+                                                                          post.id}))
+        needed_object = response.context['post'].text
+        self.assertEqual(needed_object, 'Крутой текст1')
